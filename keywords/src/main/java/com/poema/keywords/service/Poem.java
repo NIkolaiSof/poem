@@ -1,19 +1,22 @@
 package com.poema.keywords.service;
 
 
+import java.io.*;
+
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
+import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
 
 @Service
 public class Poem {
 
-	
+	private static ArrayList<String> line = new ArrayList<>();
 	private static ArrayList<String> poemList = new ArrayList<>();
 	
 	
@@ -27,107 +30,49 @@ public class Poem {
 	
 	
 	private static ArrayList<String> preposition = new ArrayList<>();
+
+	private static  HashMap<String, String> hash_map = new HashMap<String, String>();
 	
-	private String poem="";
+	private String poem=null;
+
+
+	final Logger LOGGER = LoggerFactory.getLogger(getClass());
 	
 	static{
-		poemList.add("NOUN");
-		poemList.add("PREPOSITION");
-		poemList.add("PRONOUN");
-		poemList.add("LINEBREAK");
-		
-		adjetive.add("black");
-		adjetive.add("white");
-		adjetive.add("dark");
-		adjetive.add("light");
-		adjetive.add("bright");
-		adjetive.add("murky");
-		adjetive.add("muddy");
-		adjetive.add("clear");
-		adjetive.add("NOUN");
-		adjetive.add("ADJECTIVE");
-		adjetive.add("END");
-		
-		noun.add("heart");
-		noun.add("sun");
-		noun.add("moon");
-		noun.add("thunder");
-		noun.add("fire");
-		noun.add("time");
-		noun.add("wind");
-		noun.add("sea");
-		noun.add("river");
-		noun.add("flavor");
-		noun.add("wave");
-		noun.add("willow");
-		noun.add("rain");
-		noun.add("tree");
-		noun.add("flowe");
-		noun.add("VERB");
-		noun.add("PREPOSITION");
-		noun.add("END");
-	
-		
-		verb.add("runs");
-		verb.add("walks");
-		verb.add("stands");
-		verb.add("climbs");
-		verb.add("crawls");
-		verb.add("flows");
-		verb.add("flies");
-		verb.add("transcends");
-		verb.add("ascends");
-		verb.add("descends");
-		verb.add("sinks");
-		verb.add("PREPOSITION");
-		verb.add("PRONOUN");
-		verb.add("END");
-		
-		pronoun.add("my");
-		pronoun.add("your");
-		pronoun.add("his");
-		pronoun.add("her");
-		pronoun.add("NOUN");
-		pronoun.add("ADJECTIVE");
-		
-		
-		preposition.add("above");
-		preposition.add("across");
-		preposition.add("against");
-		preposition.add("along");
-		preposition.add("among");
-		preposition.add("around");
-		preposition.add("before");
-		preposition.add("behind");
-		preposition.add("beneath");
-		preposition.add("beside");
-		preposition.add("between");
-		preposition.add("beyond");
-		preposition.add("during");
-		preposition.add("inside");
-		preposition.add("onto");
-		preposition.add("outside");
-		preposition.add("under");
-		preposition.add("underneath");
-		preposition.add("upon");
-		preposition.add("with");
-		preposition.add("without");
-		preposition.add("through");
-		preposition.add("NOUN");
-		preposition.add("PRONOUN");
-		preposition.add("ADJECTIVE");
-		
-		
 
-		
+
+		try(BufferedReader br = new BufferedReader(new FileReader("/home/nikolai/Documentos/proyectos/poema/poem/keywords/src/main/resources/lectura.txt"))) {
+			String line = br.readLine();
+
+			while (line != null) {
+				String[] parts = line.split(":");
+				hash_map.put(parts[0],parts[1]);
+				line = br.readLine();
+			}
+
+		} catch (FileNotFoundException e) {
+			throw new RuntimeException(e);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+
+		line= new ArrayList<String>(Arrays.asList(hash_map.get("POEM").split("(\\|)|(\\s+)")));
+		poemList= new ArrayList<String>(Arrays.asList(hash_map.get("LINE").split("(\\|)|(\\s+)")));
+		adjetive= new ArrayList<String>(Arrays.asList(hash_map.get("ADJECTIVE").split("(\\|)|(\\s+)")));
+		noun= new ArrayList<String>(Arrays.asList(hash_map.get("NOUN").split("(\\|)|(\\s+)")));
+		verb= new ArrayList<String>(Arrays.asList(hash_map.get("VERB").split("(\\|)|(\\s+)")));
+		pronoun= new ArrayList<String>(Arrays.asList(hash_map.get("PRONOUN").split("(\\|)|(\\s+)")));
+		preposition= new ArrayList<String>(Arrays.asList(hash_map.get("PREPOSITION").split("(\\|)|(\\s+)")));
+
 	}
 
 
 
 	public String createPoem() throws NoSuchAlgorithmException {
 		
-				
-	    for(int i = 0; i < 5; i++){
+				poem="";
+
+			for(String str : line){
 	    	poemList.stream().forEach(c -> {
 				try {
 					executionPoem(c);
@@ -139,54 +84,77 @@ public class Poem {
 
         }
 		
-	    System.out.println(poem);
-		return null;
+	    //System.out.println(poem);
+		return poem;
 	}
 	
 	public String randomString(List<String> list ) throws NoSuchAlgorithmException
 	{
 
+		List<String>words=list.stream().filter(x -> !x.contains("<")).filter(x ->  !x.contains("$")).collect(Collectors.toList());
 
-		 Random rand = SecureRandom.getInstanceStrong();
-		Optional<String> lineToExecute=list.stream().skip(rand.nextInt(list.size())).findFirst();
-		return lineToExecute.orElse("null");
+		List<String> listWords=list.stream().filter(x -> x.contains("<") || x.contains("$")).collect(Collectors.toList());
+
+		Random rand = SecureRandom.getInstanceStrong();
+
+		Optional<String> lineToExecute=words.stream()
+				.skip(rand.nextInt(words.size()))
+				.findFirst();
+		pritn(lineToExecute.orElse(""));
+
+		lineToExecute=listWords.stream()
+				.skip(rand.nextInt(listWords.size()))
+				.findFirst();
+
+		return lineToExecute.orElse("");
 	}
 	
 	public void executionPoem(String caseExecution) throws NoSuchAlgorithmException {
-		
+
+
 		switch(caseExecution)
 		{
 
-		   case "PRONOUN" :
-			   executionPoem(randomString(pronoun));
-		      break; 
-		   
-		   case "NOUN" :
-			   executionPoem(randomString(noun));
+		   case "<PRONOUN>" :
+			   executionPoem(randomString(pronoun.stream().collect(Collectors.toList())));
+			   //executionPoem(randomString(pronoun.stream().filter(x -> !x.contains("<")).collect(Collectors.toList())));
+			   //executionPoem(randomString(pronoun.stream().filter(x -> x.contains("<") || x.contains("$")).collect(Collectors.toList())));
+		      break;
+
+		   case "<NOUN>" :
+			   executionPoem(randomString(noun.stream().collect(Collectors.toList())));
+			   //executionPoem(randomString(noun.stream().filter(x -> !x.contains("<")).collect(Collectors.toList())));
+			   //executionPoem(randomString(noun.stream().filter(x -> x.contains("<") || x.contains("$")).collect(Collectors.toList())));
+		      break;
+
+		   case "<PREPOSITION>" :
+			   executionPoem(randomString(preposition.stream().collect(Collectors.toList())));
+			   //executionPoem(randomString(preposition.stream().filter(x -> !x.contains("<")).collect(Collectors.toList())));
+			   //executionPoem(randomString(preposition.stream().filter(x -> x.contains("<") || x.contains("$")).collect(Collectors.toList())));
+		      break;
+
+		   case "<VERB>" :
+			   executionPoem(randomString(verb.stream().collect(Collectors.toList())));
+			   //executionPoem(randomString(verb.stream().filter(x -> !x.contains("<")).collect(Collectors.toList())));
+			   //executionPoem(randomString(verb.stream().filter(x -> x.contains("<") || x.contains("$")).collect(Collectors.toList())));
+		      break;
+
+		   case "<ADJECTIVE>" :
+			   //executionPoem(randomString(adjetive.stream().filter(x -> !x.contains("<")).collect(Collectors.toList())));
+			   //executionPoem(randomString(adjetive.stream().filter(x -> !x.contains("<")).collect(Collectors.toList())));
+			   executionPoem(randomString(adjetive.stream().collect(Collectors.toList())));
+		      break;
+
+		   case "$END" :
 		      break;
 		      
-		   case "PREPOSITION" :
-			   executionPoem(randomString(preposition));
-		      break;
-		   
-		   case "VERB" :
-			   executionPoem(randomString(verb));
-		      break;
-		   
-		   case "ADJECTIVE" :
-			   executionPoem(randomString(adjetive));
-		      break;
-		      
-		   case "END" :
-		      break;
-		      
-		   case "LINEBREAK" :
+		   case "$LINEBREAK" :
 			   pritn("\n");
-		      break; 
+		      break;
 
 
-		   default : 
-			   pritn(caseExecution);
+		   default :
+			   pritn("");
 		}
 	}
 	

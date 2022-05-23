@@ -14,9 +14,6 @@ public class KeywordsApplication {
 		SpringApplication.run(KeywordsApplication.class, args);
 		
 		
-		Poem o=new Poem();
-		o.createPoem();
-
-	}
+			}
 
 }
